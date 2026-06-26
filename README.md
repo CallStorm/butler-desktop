@@ -53,7 +53,7 @@ flowchart TB
   end
 
   subgraph storage [LocalStorage]
-    Workspace["~/.voice-assistant/workspace"]
+    Workspace["~/.butler-desktop/workspace"]
     KB["knowledge/ 向量索引"]
     Artifacts["artifacts/ PPT等产物"]
   end
@@ -77,7 +77,7 @@ flowchart TB
 1. **双环模型**：对话环（秒级、可打断）+ 执行环（分钟级、Claude Code 子进程）
 2. **Claude Code 只做执行**：意图澄清、进度口语化由编排器的轻量对话模型负责
 3. **Skill 即插件**：PPT、知识库、未来邮件/表格都注册为 Skill + Job Profile
-4. **本地优先**：知识库与产物在 `~/.voice-assistant/`；API 密钥仅用于 LLM/STT
+4. **本地优先**：知识库与产物在 `~/.butler-desktop/`；API 密钥仅用于 LLM/STT
 
 ---
 
@@ -127,7 +127,7 @@ sequenceDiagram
 **关键实现**（借鉴 ppt-web）：
 
 - 调用形态：`claude -p "<prompt>" --output-format stream-json --dangerously-skip-permissions`
-- 工作目录：`~/.voice-assistant/workspace/jobs/<job_id>/`
+- 工作目录：`~/.butler-desktop/workspace/jobs/<job_id>/`
 - ppt-master Eight Confirmations：MVP 默认**语音确认后自动 resume**（类似 ppt-web 的 `AUTO_CONFIRM_TEXT`）
 - 进度映射：stream-json 事件 → 5~8 个用户可理解阶段（解析素材 → 定大纲 → 生成页面 → 导出 PPTX）
 
@@ -149,7 +149,7 @@ sequenceDiagram
 
 **知识库 MVP 方案**：
 
-- 源文件目录：`~/.voice-assistant/knowledge/`（md/pdf/docx，复用 ppt-master 的 `source_to_md` 做 ingest）
+- 源文件目录：`~/.butler-desktop/knowledge/`（md/pdf/docx，复用 ppt-master 的 `source_to_md` 做 ingest）
 - 索引：`sqlite-vec` 或 `chromadb` 本地向量库
 - Claude Code 侧：新增 `knowledge-base/SKILL.md`，或通过 MCP `search_knowledge` 工具暴露检索
 
@@ -158,7 +158,7 @@ sequenceDiagram
 ## 项目结构（规划）
 
 ```
-voice-assistant/
+butler-desktop/
 ├── README.md                    # 本设计文档
 ├── pyproject.toml               # Phase 0
 ├── config.example.yaml          # STT/TTS/wake/Claude 配置
@@ -196,7 +196,7 @@ voice-assistant/
 ### 本地数据目录
 
 ```
-~/.voice-assistant/
+~/.butler-desktop/
 ├── config.yaml
 ├── workspace/jobs/<job_id>/     # Claude Code 工作区
 ├── knowledge/                   # 原始文档
@@ -241,14 +241,14 @@ Idle → Listening → Transcribing → Routing
 
 ```mermaid
 flowchart LR
-  VA["voice-assistant"]
+  BD["butler-desktop"]
   PW["ppt-web 借鉴 runner"]
   PM["ppt-master skill"]
   NM["Nanomate 不改造"]
 
-  PW -->|抽取 claude runner| VA
-  PM -->|Skill 挂载| VA
-  NM -.->|仅参考 STT 抽象| VA
+  PW -->|抽取 claude runner| BD
+  PM -->|Skill 挂载| BD
+  NM -.->|仅参考 STT 抽象| BD
 ```
 
 - **不改造 Nanomate**：其 agent loop 与 Claude Code 内核目标不一致
@@ -263,7 +263,7 @@ flowchart LR
 
 - 完善 `pyproject.toml`、`config.yaml`、日志与目录初始化
 - 从 ppt-web 抽取 Claude CLI 流式封装
-- CLI 验证：`assistant run "用 ppt-master 做一页封面"` 终端跑通
+- CLI 验证：`butler run "用 ppt-master 做一页封面"` 终端跑通
 
 ### Phase 1 — 语音闭环（约 1~2 周）
 
