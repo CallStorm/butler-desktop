@@ -13,18 +13,18 @@
 
 | 决策项 | 选择 |
 |--------|------|
-| 架构 | 新建「语音编排器 + Claude Code CLI」，不改造 Nanomate |
+| 架构 | 新建「语音编排器 + Claude Code CLI」，不改造 [NanoMate](https://github.com/shenmintao/NanoMate) |
 | MVP 范围 | 语音对话 + 做 PPT + 个人知识库问答 |
 | 平台 | macOS 优先（后续可扩展） |
 
 ### 可复用的现有资产
 
-| 资产 | 路径 | 复用方式 |
-|------|------|----------|
-| Claude Code headless 执行模式 | `~/Developer/personal/ppt-web/backend/runner/` | 抽取 `stream_claude` + `stream-json` 解析 |
-| ppt-master 工作流 | `~/.claude/plugins/cache/ppt-master/...` | 作为 Claude Code Skill 挂载 |
+| 资产 | 参考仓库 | 复用方式 |
+|------|----------|----------|
+| Claude Code headless 执行模式 | [CallStorm/ppt-web](https://github.com/CallStorm/ppt-web) `backend/runner/` | 抽取 `stream_claude` + `stream-json` 解析 |
+| ppt-master 工作流 | [CallStorm/ppt-master](https://github.com/CallStorm/ppt-master) | 作为 Claude Code Skill 挂载 |
 | 浏览器自动化 | `~/.agents/skills/autoglm-browser-agent` | Phase 2+ 插件，MVP 不纳入 |
-| Nanomate STT 思路 | `~/Developer/personal/Nanomate/nanobot/audio/` | 借鉴 provider 抽象，不 fork agent loop |
+| NanoMate STT 思路 | [shenmintao/NanoMate](https://github.com/shenmintao/NanoMate) `nanobot/audio/` | 借鉴 provider 抽象，不 fork agent loop |
 
 ---
 
@@ -124,11 +124,11 @@ sequenceDiagram
   O->>U: TTS 完成 + 可选打开文件
 ```
 
-**关键实现**（借鉴 ppt-web）：
+**关键实现**（借鉴 [ppt-web](https://github.com/CallStorm/ppt-web)）：
 
 - 调用形态：`claude -p "<prompt>" --output-format stream-json --dangerously-skip-permissions`
 - 工作目录：`~/.butler-desktop/workspace/jobs/<job_id>/`
-- ppt-master Eight Confirmations：MVP 默认**语音确认后自动 resume**（类似 ppt-web 的 `AUTO_CONFIRM_TEXT`）
+- ppt-master Eight Confirmations：MVP 默认**语音确认后自动 resume**（类似 [ppt-web](https://github.com/CallStorm/ppt-web) 的 `AUTO_CONFIRM_TEXT`）
 - 进度映射：stream-json 事件 → 5~8 个用户可理解阶段（解析素材 → 定大纲 → 生成页面 → 导出 PPTX）
 
 ### 场景 C：知识库问答
@@ -173,7 +173,7 @@ butler-desktop/
 │   ├── tts.py                   # edge-tts
 │   └── wake.py                  # Phase 1.5：openWakeWord；MVP 先用 PTT
 ├── claude/
-│   ├── runner.py                # 从 ppt-web 抽取 stream_claude
+│   ├── runner.py                # 从 ppt-web 抽取 stream_claude（见 CallStorm/ppt-web）
 │   ├── events.py                # stream-json → 统一 JobEvent
 │   └── profiles/                # job 配置：ppt.yaml, kb.yaml
 ├── plugins/
@@ -242,17 +242,17 @@ Idle → Listening → Transcribing → Routing
 ```mermaid
 flowchart LR
   BD["butler-desktop"]
-  PW["ppt-web 借鉴 runner"]
+  PW["CallStorm/ppt-web"]
   PM["ppt-master skill"]
-  NM["Nanomate 不改造"]
+  NM["shenmintao/NanoMate"]
 
   PW -->|抽取 claude runner| BD
   PM -->|Skill 挂载| BD
   NM -.->|仅参考 STT 抽象| BD
 ```
 
-- **不改造 Nanomate**：其 agent loop 与 Claude Code 内核目标不一致
-- **不合并 ppt-web**：ppt-web 是多租户 Web + Docker；个人助手应本机单用户、无 Docker 也可跑
+- **不改造 [NanoMate](https://github.com/shenmintao/NanoMate)**：其 agent loop 与 Claude Code 内核目标不一致
+- **不合并 [ppt-web](https://github.com/CallStorm/ppt-web)**：ppt-web 是多租户 Web + Docker；个人助手应本机单用户、无 Docker 也可跑
 - **共享 ppt-master**：保证语音触发与 Web 提交产物质量一致
 
 ---
@@ -262,7 +262,7 @@ flowchart LR
 ### Phase 0 — 骨架（约 1 周）
 
 - 完善 `pyproject.toml`、`config.yaml`、日志与目录初始化
-- 从 ppt-web 抽取 Claude CLI 流式封装
+- 从 [ppt-web](https://github.com/CallStorm/ppt-web) 抽取 Claude CLI 流式封装
 - CLI 验证：`butler run "用 ppt-master 做一页封面"` 终端跑通
 
 ### Phase 1 — 语音闭环（约 1~2 周）
@@ -296,8 +296,8 @@ flowchart LR
 
 | 组件 | 推荐 | 理由 |
 |------|------|------|
-| 语言 | Python 3.11+ | 与 ppt-web、ppt-master、Nanomate 生态一致 |
-| Claude 调用 | `claude` CLI + stream-json | 已在 ppt-web 验证 |
+| 语言 | Python 3.11+ | 与 [ppt-web](https://github.com/CallStorm/ppt-web)、ppt-master、[NanoMate](https://github.com/shenmintao/NanoMate) 生态一致 |
+| Claude 调用 | `claude` CLI + stream-json | 已在 [ppt-web](https://github.com/CallStorm/ppt-web) 验证 |
 | STT | Groq `whisper-large-v3` | 延迟低；本地 fallback 用 faster-whisper |
 | TTS | edge-tts | 中文免费、ppt-master 已用 |
 | VAD | silero-vad | 准确、轻量 |
@@ -333,6 +333,6 @@ flowchart LR
 设计确认后，按 Phase 0 开始编码：
 
 1. 完善项目骨架与配置
-2. 从 ppt-web 抽取最小 `claude/runner.py`
+2. 从 [ppt-web](https://github.com/CallStorm/ppt-web) 抽取最小 `claude/runner.py`
 3. 实现 Phase 1 PTT 语音环
 4. 挂载 ppt-master，跑通第一个语音触发的 PPT job
